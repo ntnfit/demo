@@ -5,6 +5,8 @@ import { openai } from "@/app/openai";
 export async function POST(request) {
   const formData = await request.formData(); // process file as FormData
   const file = formData.get("file"); // retrieve the single file from FormData
+  console.log('Uploading file:', file.name);
+
   const vectorStoreId = await getOrCreateVectorStore(); // get or create vector store
 
   // upload using the file stream
@@ -12,18 +14,27 @@ export async function POST(request) {
     file: file,
     purpose: "assistants",
   });
+  console.log('File uploaded to OpenAI:', {
+    id: openaiFile.id,
+    filename: openaiFile.filename,
+    purpose: openaiFile.purpose
+  });
 
   // add file to vector store
   await openai.beta.vectorStores.files.create(vectorStoreId, {
     file_id: openaiFile.id,
   });
+  console.log('File added to vector store:', vectorStoreId);
   return new Response();
 }
 
 // list files in assistant's vector store
 export async function GET() {
   const vectorStoreId = await getOrCreateVectorStore(); // get or create vector store
+  console.log('Getting files from vector store:', vectorStoreId);
+
   const fileList = await openai.beta.vectorStores.files.list(vectorStoreId);
+  console.log('Files in vector store:', fileList.data);
 
   const filesArray = await Promise.all(
     fileList.data.map(async (file) => {
@@ -39,6 +50,7 @@ export async function GET() {
       };
     })
   );
+  console.log('Processed files array:', filesArray);
   return Response.json(filesArray);
 }
 
@@ -46,9 +58,11 @@ export async function GET() {
 export async function DELETE(request) {
   const body = await request.json();
   const fileId = body.fileId;
+  console.log('Deleting file:', fileId);
 
   const vectorStoreId = await getOrCreateVectorStore(); // get or create vector store
   await openai.beta.vectorStores.files.del(vectorStoreId, fileId); // delete file from vector store
+  console.log('File deleted from vector store');
 
   return new Response();
 }

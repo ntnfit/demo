@@ -3,64 +3,161 @@
   flex-direction: column-reverse;
   height: 100%;
   width: 100%;
+  min-height: 0;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  /* Important for proper scrolling */
 }
 
 .inputForm {
   display: flex;
   width: 100%;
-  padding: 10px;
+  padding: 20px;
   padding-bottom: 40px;
   order: 1;
+  position: relative;
+  z-index: 1;
+  background: var(--bg-card);
+  border-radius: 0 0 24px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.inputWrapper {
+  flex-grow: 1;
+  margin-right: 12px;
+  position: relative;
+  border-radius: 60px;
+  background: var(--gradient-primary);
+  padding: 2px;
+  transition: all 0.3s ease;
+  opacity: 0.9;
+}
+
+.inputWrapper:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.inputWrapper:focus-within {
+  background: var(--gradient-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  opacity: 1;
 }
 
 .input {
-  flex-grow: 1;
-  padding: 16px 24px;
-  margin-right: 10px;
-  border-radius: 60px;
-  border: 2px solid transparent;
-  font-size: 1em;
-  background-color: #efefef;
-}
-
-.input:focus {
-  outline: none !important;
-  border-color: #000;
-  background-color: white;
-}
-
-.button {
-  padding: 8px 24px;
-  background-color: #000;
-  color: white;
+  flex: 1;
+  padding: 12px 16px;
   border: none;
+  background: transparent;
   font-size: 1em;
-  border-radius: 60px; /* Removed duplicate border-radius property */
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  font-weight: 500;
+  outline: none;
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--gradient-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.input::placeholder {
+  color: var(--text-primary);
+  opacity: 0.9;
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Enhanced placeholder visibility for dark mode */
+:root[data-theme="dark"] .input::placeholder {
+  color: var(--text-primary);
+  opacity: 0.95;
+}
+
+
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-secondary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.button:hover:not(:disabled)::before {
+  opacity: 1;
 }
 
 .button:disabled {
-  background-color: lightgrey;
+  background-color: var(--text-secondary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .messages {
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  overflow-x: hidden;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   order: 2;
   white-space: pre-wrap;
+  min-height: 0;
+  position: relative;
+  z-index: 2;
+  /* Important for proper scrolling */
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary);
 }
 
 .userMessage,
 .assistantMessage,
 .codeMessage {
   margin: 8px 0;
-  padding: 8px 16px;
+  padding: 15px 20px;
   align-self: flex-start;
-  border-radius: 15px;
+  border-radius: 18px;
   max-width: 80%;
   overflow-wrap: break-word;
+  word-wrap: break-word;
+  line-height: 1.5;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .assistantMessage img {
@@ -71,26 +168,214 @@
 
 .userMessage {
   align-self: flex-end;
-  color: #fff;
-  background-color: #000;
+  color: white;
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 1;
 }
 
 .assistantMessage {
-  background-color: #efefef;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 1;
 }
 
 .codeMessage {
   padding: 10px 16px;
-  background-color: #e9e9e9;
-  font-family: monospace;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
   counter-reset: line;
+  border: 1px solid var(--border-color);
 }
 
-.codeMessage > div {
+.codeMessage>div {
   margin-top: 4px;
 }
 
 .codeMessage span {
   color: #b8b8b8;
   margin-right: 8px;
+}
+
+/* Typing Indicator */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.typingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-secondary);
+  animation: typingAnimation 1.4s infinite ease-in-out;
+}
+
+.typingDot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.typingDot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes typingAnimation {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Button Icons - Override existing button styles */
+.button {
+  padding: 12px 28px;
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  font-size: 1em;
+  border-radius: 60px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.buttonText {
+  font-weight: 500;
+}
+
+.loadingIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Attachment Button */
+.attachmentButton {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.attachmentButton:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.attachmentButton:active {
+  transform: scale(0.95);
+}
+
+/* Input Wrapper Update */
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: var(--bg-secondary);
+  border-radius: 25px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+/* Selected Files */
+.selectedFiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.fileChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-tertiary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.fileChip:hover {
+  background: var(--bg-primary);
+  transform: translateY(-1px);
+}
+
+.fileName {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.removeFileButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.removeFileButton:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transform: scale(1.1);
 }

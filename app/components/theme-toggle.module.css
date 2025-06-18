@@ -1,0 +1,123 @@
+.themeToggle {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.themeToggle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-primary);
+  opacity: 0.1;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+  border-radius: 50px;
+}
+
+.themeToggle:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-color);
+}
+
+.themeToggle:hover::before {
+  opacity: 0.2;
+}
+
+.toggleTrack {
+  width: 50px;
+  height: 26px;
+  background: var(--toggle-track-bg);
+  border-radius: 50px;
+  position: relative;
+  transition: all 0.3s ease;
+  border: 1px solid var(--toggle-border);
+  overflow: hidden;
+}
+
+.toggleTrack::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-accent);
+  opacity: 0.3;
+  z-index: 0;
+}
+
+.toggleThumb {
+  width: 22px;
+  height: 22px;
+  background: var(--toggle-thumb-bg);
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--toggle-icon-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  z-index: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.toggleThumb::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-primary);
+  opacity: 0.2;
+  z-index: -1;
+}
+
+.toggleThumb.light {
+  left: 1px;
+  transform: translateX(0);
+}
+
+.toggleThumb.dark {
+  left: 1px;
+  transform: translateX(24px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .themeToggle {
+    top: 16px;
+    right: 16px;
+    padding: 6px;
+  }
+
+  .toggleTrack {
+    width: 44px;
+    height: 24px;
+  }
+
+  .toggleThumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .toggleThumb.dark {
+    transform: translateX(20px);
+  }
+}

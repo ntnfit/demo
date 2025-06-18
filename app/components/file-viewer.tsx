@@ -30,7 +30,7 @@ const FileViewer = () => {
   }, []);
 
   const fetchFiles = async () => {
-    const resp = await fetch("/api/assistants/files", {
+    const resp = await fetch(`/api/assistants/files`, {
       method: "GET",
     });
     const data = await resp.json();
@@ -38,7 +38,7 @@ const FileViewer = () => {
   };
 
   const handleFileDelete = async (fileId) => {
-    await fetch("/api/assistants/files", {
+    await fetch(`/api/assistants/files`, {
       method: "DELETE",
       body: JSON.stringify({ fileId }),
     });
@@ -48,7 +48,7 @@ const FileViewer = () => {
     const data = new FormData();
     if (event.target.files.length < 0) return;
     data.append("file", event.target.files[0]);
-    await fetch("/api/assistants/files", {
+    await fetch(`/api/assistants/files`, {
       method: "POST",
       body: data,
     });
@@ -57,9 +57,8 @@ const FileViewer = () => {
   return (
     <div className={styles.fileViewer}>
       <div
-        className={`${styles.filesList} ${
-          files.length !== 0 ? styles.grow : ""
-        }`}
+        className={`${styles.filesList} ${files.length !== 0 ? styles.grow : ""
+          }`}
       >
         {files.length === 0 ? (
           <div className={styles.title}>Attach files to test file search</div>

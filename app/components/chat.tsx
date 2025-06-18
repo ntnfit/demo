@@ -17,6 +17,18 @@ const UserMessage = ({ text }: { text: string }) => {
   return <div className={styles.userMessage}>{text}</div>;
 };
 
+const TypingIndicator = () => {
+  return (
+    <div className={styles.assistantMessage}>
+      <div className={styles.typingIndicator}>
+        <div className={styles.typingDot}></div>
+        <div className={styles.typingDot}></div>
+        <div className={styles.typingDot}></div>
+      </div>
+    </div>
+  );
+};
+
 const AssistantMessage = ({ text }: { text: string }) => {
   return (
     <div className={styles.assistantMessage}>
@@ -64,6 +76,9 @@ const Chat = ({
   const [messages, setMessages] = useState([]);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // automatically scroll to bottom of chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -86,14 +101,20 @@ const Chat = ({
     createThread();
   }, []);
 
-  const sendMessage = async (text) => {
+  const sendMessage = async (text: string, files: File[] = []) => {
+    const formData = new FormData();
+    formData.append('content', text);
+
+    // Add files to form data
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
     const response = await fetch(
       `/api/assistants/threads/${threadId}/messages`,
       {
         method: "POST",
-        body: JSON.stringify({
-          content: text,
-        }),
+        body: formData,
       }
     );
     const stream = AssistantStream.fromReadableStream(response.body);
@@ -118,16 +139,39 @@ const Chat = ({
     handleReadableStream(stream);
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!userInput.trim()) return;
-    sendMessage(userInput);
+    if (!userInput.trim() && selectedFiles.length === 0) return;
+
+    // Create display message with file info
+    let displayText = userInput;
+    if (selectedFiles.length > 0) {
+      const fileNames = selectedFiles.map(f => f.name).join(', ');
+      displayText += selectedFiles.length > 0 ? `\n📎 Files: ${fileNames}` : '';
+    }
+
+    sendMessage(userInput, selectedFiles);
     setMessages((prevMessages) => [
       ...prevMessages,
-      { role: "user", text: userInput },
+      { role: "user", text: displayText },
     ]);
     setUserInput("");
+    setSelectedFiles([]);
     setInputDisabled(true);
+    setIsTyping(true);
     scrollToBottom();
   };
 
@@ -135,11 +179,13 @@ const Chat = ({
 
   // textCreated - create new assistant message
   const handleTextCreated = () => {
+    setIsTyping(false);
     appendMessage("assistant", "");
   };
 
   // textDelta - append text to last assistant message
   const handleTextDelta = (delta) => {
+    console.log("detal:", delta);
     if (delta.value != null) {
       appendToLastMessage(delta.value);
     };
@@ -150,17 +196,21 @@ const Chat = ({
 
   // imageFileDone - show image in chat
   const handleImageFileDone = (image) => {
+    console.log('Image file received:', image);
+    console.log('Image file ID:', image.file_id);
     appendToLastMessage(`\n![${image.file_id}](/api/files/${image.file_id})\n`);
   }
 
   // toolCallCreated - log new tool call
   const toolCallCreated = (toolCall) => {
+    console.log('Tool call created:', toolCall);
     if (toolCall.type != "code_interpreter") return;
     appendMessage("code", "");
   };
 
   // toolCallDelta - log delta and snapshot for the tool call
   const toolCallDelta = (delta, snapshot) => {
+    console.log('Tool call delta:', delta);
     if (delta.type != "code_interpreter") return;
     if (!delta.code_interpreter.input) return;
     appendToLastMessage(delta.code_interpreter.input);
@@ -186,6 +236,7 @@ const Chat = ({
   // handleRunCompleted - re-enable the input form
   const handleRunCompleted = () => {
     setInputDisabled(false);
+    setIsTyping(false);
   };
 
   const handleReadableStream = (stream: AssistantStream) => {
@@ -230,6 +281,7 @@ const Chat = ({
   };
 
   const annotateLastMessage = (annotations) => {
+    console.log('Message annotations:', annotations);
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
       const updatedLastMessage = {
@@ -237,6 +289,7 @@ const Chat = ({
       };
       annotations.forEach((annotation) => {
         if (annotation.type === 'file_path') {
+          console.log('File path annotation:', annotation);
           updatedLastMessage.text = updatedLastMessage.text.replaceAll(
             annotation.text,
             `/api/files/${annotation.file_path.file_id}`
@@ -245,8 +298,7 @@ const Chat = ({
       })
       return [...prevMessages.slice(0, -1), updatedLastMessage];
     });
-    
-  }
+  };
 
   return (
     <div className={styles.chatContainer}>
@@ -254,25 +306,76 @@ const Chat = ({
         {messages.map((msg, index) => (
           <Message key={index} role={msg.role} text={msg.text} />
         ))}
+        {isTyping && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Selected Files Display */}
+      {selectedFiles.length > 0 && (
+        <div className={styles.selectedFiles}>
+          {selectedFiles.map((file, index) => (
+            <div key={index} className={styles.fileChip}>
+              <span className={styles.fileName}>{file.name}</span>
+              <button
+                type="button"
+                onClick={() => removeFile(index)}
+                className={styles.removeFileButton}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className={`${styles.inputForm} ${styles.clearfix}`}
       >
-        <input
-          type="text"
-          className={styles.input}
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          placeholder="Enter your question"
-        />
+        <div className={styles.inputWrapper}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            multiple
+            style={{ display: 'none' }}
+            accept=".txt,.pdf,.doc,.docx,.csv,.json,.py,.js,.html,.css,.md"
+          />
+          <button
+            type="button"
+            className={styles.attachmentButton}
+            onClick={handleAttachmentClick}
+            title="Attach file"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+          </button>
+          <input
+            type="text"
+            className={styles.input}
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder="Enter your question"
+          />
+        </div>
         <button
           type="submit"
           className={styles.button}
           disabled={inputDisabled}
         >
-          Send
+          {inputDisabled ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.loadingIcon}>
+              <circle cx="12" cy="12" r="10" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m22 2-7 20-4-9-9-4Z" />
+              <path d="M22 2 11 13" />
+            </svg>
+          )}
+          <span className={styles.buttonText}>Send</span>
         </button>
       </form>
     </div>
